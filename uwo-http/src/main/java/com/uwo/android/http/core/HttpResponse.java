@@ -12,10 +12,13 @@ import java.net.HttpURLConnection;
  */
 public class HttpResponse {
 
+    private HttpMapper mapper;
+
     private HttpURLConnection conn;
 
-    public HttpResponse(HttpURLConnection conn){
+    public HttpResponse(HttpURLConnection conn, HttpMapper mapper){
         this.conn = conn;
+        this.mapper = mapper;
     }
 
     /**
@@ -60,8 +63,7 @@ public class HttpResponse {
             try {
                 return getStreamAsString(getErrorStream(), "UTF-8");
             }catch(Exception e1){
-                e1.printStackTrace();
-                return null;
+                return "";
             }
         }
     }

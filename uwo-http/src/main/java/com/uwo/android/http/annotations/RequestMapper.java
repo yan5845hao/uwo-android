@@ -1,5 +1,6 @@
 package com.uwo.android.http.annotations;
 
+import com.uwo.android.http.core.HttpFormat;
 import com.uwo.android.http.core.HttpMethod;
 
 import java.lang.annotation.ElementType;
@@ -17,5 +18,7 @@ public @interface RequestMapper {
     String value() default "";
 
     HttpMethod method() default HttpMethod.GET;
+
+    HttpFormat format() default HttpFormat.JSON;
 
 }

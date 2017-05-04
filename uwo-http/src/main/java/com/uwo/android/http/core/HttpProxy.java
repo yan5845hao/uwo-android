@@ -1,10 +1,14 @@
 package com.uwo.android.http.core;
 
 
+import android.util.JsonReader;
 import android.util.Log;
 import com.uwo.android.http.annotations.RequestHeader;
 import com.uwo.android.http.annotations.RequestMapper;
 import com.uwo.android.http.annotations.RequestParam;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+import org.json.JSONTokener;
 
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
@@ -55,6 +59,7 @@ class HttpProxy<T> implements InvocationHandler {
         // 获取方法中的注解 获取请求链接
         RequestMapper mapper = method.getAnnotation(RequestMapper.class);
         domain += mapper.value();
+        HttpMapper httpMapper = new HttpMapper(domain, method.getName(), mapper.method(), mapper.format());
         // 获取请求参数
         Map<String, Object> params = new HashMap<String, Object>();
         // 获取请求头部信息
@@ -74,110 +79,88 @@ class HttpProxy<T> implements InvocationHandler {
                 }
             }
         }
-
+        // 判断是否传递了handler 如果没有传递handler直接返回值 有则handler返回值
         if(handler == null)
-            return execute(domain, mapper.method(), headers, params);
+            return execute(httpMapper, headers, params);
         else {
-            new Thread(new HttpRunnable(domain, mapper.method(), headers, params)).start();
+            new Thread(new HttpRunnable(httpMapper, headers, params)).start();
         }
         return null;
     }
 
-    private String execute(String url, HttpMethod method, Map<String, Object> params, Map<String, Object> headers){
-        // 处理请求方式
-        switch (method){
-            case GET:
-            case DELETE:
-                return request(url + "?" + queryStr(params), method, headers);
-            case POST:
-            case PUT:
-            default:
-                 return request(url, method, headers, queryStr(params));
-        }
+    private String execute(HttpMapper mapper, Map<String, Object> params, Map<String, Object> headers){
+        return request(mapper, headers, params);
+//        switch (mapper.format){
+//            case JSON:
+//                result = JsonAddAction(result, mapper);
+//                break;
+//            case XML:
+//                result = JsonAddAction(result, mapper);
+//                break;
+//            default:
+//                result = JsonAddAction(result, mapper);
+//                break;
+//        }
+//
+//        return result;
     }
 
-
     /**
-     * queryStr
-     * @param values
+     * 添加action
+     * @param result
+     * @param mapper
      * @return
      */
-    private String queryStr(Map<String, Object> values){
-        if(values.size() == 0)
-            return "";
-        StringBuffer sb = new StringBuffer();
-        for(String key:values.keySet()){
-            sb.append(key);
-            sb.append("=");
-            sb.append(values.get(key));
-            sb.append("&");
+    private String JsonAddAction(String result, HttpMapper mapper){
+        try{
+            JSONObject json = new JSONObject(result);
+            json.put("action", mapper.action);
+            return json.toString();
+        }catch(Exception e){
+            try{
+                JSONObject json = new JSONObject();
+                json.put("result", result);
+                json.put("action", mapper.action);
+                return json.toString();
+            }catch(Exception e1) {
+                return result;
+            }
         }
-        return sb.toString().substring(0, sb.toString().length() - 1);
     }
 
     /**
      * 请求
-     * @param realUrl
-     * @param method
-     * @return
-     */
-    private String request(String realUrl, HttpMethod method, Map<String, Object> headers){
-        return request(realUrl, method, headers, null);
-    }
-
-    /**
-     * 请求
-     * @param realUrl
-     * @param method
+     * @param mapper
+     * @param headers
      * @param params
      * @return
      */
-    private String request(String realUrl, HttpMethod method, Map<String, Object> headers, String params){
+    private String request(HttpMapper mapper, Map<String, Object> headers, Map<String, Object> params){
         try {
             // 查看请求数据链接
-            StringBuffer sb = new StringBuffer();
-            sb.append("[").append(method).append("]").append(" ").append(realUrl);
-            Log.w(TAG, sb.toString());
-            // 查看请求数据链接
-            URL url = new URL(realUrl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod(method.name());
-            // 头部信息
-            for (String key:headers.keySet())
-                conn.setRequestProperty(key, String.valueOf(headers.get(key)));
-            conn.setConnectTimeout(30000);
-            conn.setReadTimeout(30000);
-            conn.setInstanceFollowRedirects(false);
-            if(params != null) {
-                Log.w(TAG, params);
-                byte[] bytes = params.getBytes("UTF-8");
-                OutputStream os = conn.getOutputStream();
-                os.write(bytes, 0, bytes.length);
-                os.flush();
-                os.close();
-
-            }
-            conn.connect();
-            return new HttpResponse(conn).getBody();
+            HttpRequest request = new HttpRequest(mapper);
+            request.addParams(params);
+            request.addHeaders(headers);
+            return request.execute().getBody();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
 
+    /**
+     * http请求线程
+     */
     class HttpRunnable implements Runnable{
 
-        private String url;
-
-        private HttpMethod method;
+        private HttpMapper mapper;
 
         private Map<String, Object> params;
 
         private Map<String, Object> headers;
 
-        public HttpRunnable(String url, HttpMethod method, Map<String, Object> params, Map<String, Object> headers){
-            this.url = url;
-            this.method = method;
+        public HttpRunnable(HttpMapper mapper, Map<String, Object> params, Map<String, Object> headers){
+            this.mapper = mapper;
             this.params = params;
             this.headers = headers;
         }
@@ -185,17 +168,16 @@ class HttpProxy<T> implements InvocationHandler {
 
         @Override
         public void run() {
-            final String result = execute(url, method, headers, params);
+            final String result = execute(mapper, headers, params);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-
                     if (validate == null)
-                        handler.callback(result);
+                        handler.callback(mapper.action, result);
                     else if (validate.validateResult(result))
-                        handler.success(result);
+                        handler.success(mapper.action, result);
                     else
-                        handler.error(result);
+                        handler.error(mapper.action, result);
                 }
             });
         }

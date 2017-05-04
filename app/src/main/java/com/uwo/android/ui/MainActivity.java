@@ -32,17 +32,17 @@ public class MainActivity extends AppCompatActivity {
         Api o =  manager.proxyObject(Api.class, new HttpHandler() {
 
             @Override
-            public void success(Object o) {
+            public void success(String action, Object o) {
                 Toast.makeText(MainActivity.this, "SUCCESS", Toast.LENGTH_LONG).show();
             }
 
             @Override
-            public void error(Object o) {
+            public void error(String action, Object o) {
                 Toast.makeText(MainActivity.this, "ERROR", Toast.LENGTH_LONG).show();
             }
 
             @Override
-            public void callback(Object o) {
+            public void callback(String action, Object o) {
                 Toast.makeText(MainActivity.this, "CALLBACK", Toast.LENGTH_LONG).show();
             }
 

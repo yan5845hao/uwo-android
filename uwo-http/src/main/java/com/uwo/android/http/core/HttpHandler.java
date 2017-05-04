@@ -7,29 +7,24 @@ import android.os.Handler;
  */
 public abstract class HttpHandler extends Handler {
 
-//    /**
-//     * 执行方法
-//     * @param o
-//     */
-//    public abstract Object invoke(Object o);
 
     /**
      * 成功返回
      * @return
      */
-    public abstract void success(Object o);
+    public abstract void success(String action, Object o);
 
     /**
      * 错误异常
      * @return
      */
-    public abstract void error(Object o);
+    public abstract void error(String action, Object o);
 
     /**
      * 返回
      * @param o
      */
-    public abstract void callback(Object o);
+    public abstract void callback(String action, Object o);
 
 
 }
