@@ -168,7 +168,7 @@ class HttpProxy<T> implements InvocationHandler {
 
         @Override
         public void run() {
-            final String result = execute(mapper, headers, params);
+            final String result = execute(mapper, params, headers);
             handler.post(new Runnable() {
                 @Override
                 public void run() {
