@@ -81,9 +81,9 @@ class HttpProxy<T> implements InvocationHandler {
         }
         // 判断是否传递了handler 如果没有传递handler直接返回值 有则handler返回值
         if(handler == null)
-            return execute(httpMapper, headers, params);
+            return execute(httpMapper, params, headers);
         else {
-            new Thread(new HttpRunnable(httpMapper, headers, params)).start();
+            new Thread(new HttpRunnable(httpMapper, params, headers)).start();
         }
         return null;
     }
