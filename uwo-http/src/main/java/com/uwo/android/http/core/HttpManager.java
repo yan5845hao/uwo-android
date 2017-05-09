@@ -1,5 +1,6 @@
 package com.uwo.android.http.core;
 
+import javax.xml.validation.Validator;
 import java.lang.reflect.Proxy;
 
 /**
@@ -26,6 +27,10 @@ public class HttpManager {
      * 请求
      */
     public <T> T proxyObject(Class<T> c, HttpHandler handler){
+        return proxyObject(c, handler, null);
+    }
+
+    public <T> T proxyObject(Class<T> c, HttpHandler handler, HttpValidate validate){
         HttpProxy<T> proxy = new HttpProxy<T>(handler, validate);
         return (T)(Proxy.newProxyInstance(c.getClassLoader(), new Class[]{c}, proxy));
     }
