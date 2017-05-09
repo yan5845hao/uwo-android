@@ -45,7 +45,7 @@ public class HttpRequest {
     }
 
     private void openConn() throws Exception{
-        mapper.domain = (params != null && (mapper.method == HttpMethod.GET || mapper.method == HttpMethod.DELETE)) ? (mapper.domain += params) : mapper.domain;
+        mapper.domain = (params != null && (mapper.method == HttpMethod.GET || mapper.method == HttpMethod.DELETE)) ? (mapper.domain += ("?" + params)) : mapper.domain;
         // 查看请求数据链接
         StringBuffer sb = new StringBuffer();
         sb.append("[").append(mapper.method).append("]").append(" ").append(mapper.domain);
