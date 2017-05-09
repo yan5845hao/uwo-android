@@ -68,12 +68,14 @@ public class HttpRequest {
             conn.setConnectTimeout(30000);
             conn.setReadTimeout(30000);
             conn.setInstanceFollowRedirects(false);
-            if(params != null) {
-                byte[] bytes = params.getBytes("UTF-8");
-                OutputStream os = conn.getOutputStream();
-                os.write(bytes, 0, bytes.length);
-                os.flush();
-                os.close();
+            if(mapper.method != HttpMethod.GET && mapper.method != HttpMethod.DELETE) {
+                if (params != null) {
+                    byte[] bytes = params.getBytes("UTF-8");
+                    OutputStream os = conn.getOutputStream();
+                    os.write(bytes, 0, bytes.length);
+                    os.flush();
+                    os.close();
+                }
             }
             conn.connect();
             return new HttpResponse(conn, mapper);
